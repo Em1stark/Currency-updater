@@ -27,6 +27,20 @@ def create_app():
 
     from flask import request, jsonify
 
+    @app.route('/fetch_data', methods=['POST'])
+    def fetch_data():
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            return "Invalid date format. Please use 'YYYY-MM-DD' format.", 400
+
+        RateService.fetch_rates_by_date_range(start_date, end_date)
+        return "Data fetched successfully.", 200
+
     @app.route('/report', methods=['GET'])
     def get_rates_report():
         start_date = request.args.get('start_date')
