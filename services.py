@@ -1,8 +1,7 @@
 # from app import db  # Remove this line
 from models import Rate, CurrencyInfo, RateDate
-from datetime import date, timedelta
+from datetime import date
 from extensions import scheduler, db  # Add the db import here
-from tasks import fetch_daily_rates
 
 
 class RateService:
@@ -19,33 +18,6 @@ class RateService:
         db.session.commit()
         return rate
 
-    @staticmethod
-    def fetch_rates_by_date_range(start_date, end_date):
-        dates = [start_date + timedelta(days=x) for x in range((end_date - start_date).days + 1)]
-        for rate_date in dates:
-            rates = fetch_daily_rates(rate_date)
-            rate_date_obj = RateDateService.find_or_create(rate_date)
-
-            header = rates.pop(0)  # Remove the header row
-            date_key = next(
-                (key for key in header if key is not None and key.startswith(rate_date.strftime("%d %b %Y"))), None)
-            if not date_key:
-                continue
-
-            key_map = {key: index for index, key in enumerate(header[date_key])}  # Create a mapping of key to index
-
-            for rate in rates:
-                if key_map.get('Country') and rate[key_map['Country']] == "Country":
-                    continue
-
-                if 'Code' not in key_map:
-                    continue
-                code = rate[key_map['Code']]
-
-                currency_info = CurrencyInfoService.get_by_code(code) or CurrencyInfoService.create(
-                    rate[key_map['Currency']], rate[key_map['Country']], code)
-                RateService.create_or_update(rate_date_obj, currency_info, int(rate[key_map['Amount']]),
-                                             float(rate[key_map['Rate']]))
 
 class CurrencyInfoService:
 
