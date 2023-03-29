@@ -47,9 +47,22 @@ def create_app():
         if not all(currencies):
             return "Неверный ввод валют. Пожалуйста, предоставьте список кодов валют, разделенных запятыми.", 400
 
-        # Здесь вы можете добавить логику обновления базы данных с использованием полученных данных
-        # ...
+            # Логика обновления базы данных с использованием полученных данных
+            current_date = start_date
+            while current_date <= end_date:
+                rates = fetch_daily_rates(current_date)
+                rate_date = RateDateService.find_or_create(current_date)
 
+                for rate in rates:
+                    code = rate['Code']
+                    if code not in currencies:
+                        continue
+
+                    currency_info = CurrencyInfoService.get_by_code(code) or CurrencyInfoService.create(
+                        rate['Currency'], rate['Country'], code)
+                    RateService.create_or_update(rate_date, currency_info, int(rate['Amount']), float(rate['Rate']))
+
+                current_date += timedelta(days=1)
         return jsonify({"message": "Данные успешно обновлены"})
 
     @app.route('/report', methods=['GET'])
