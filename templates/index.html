@@ -151,6 +151,7 @@
 
     <button type="submit">Построить отчёт</button>
     <button type="button" onclick="openRawJson();">Открыть JSON</button>
+    <button type="button" onclick="updateData();">Update Data</button>
 </form>
 
 <!-- Add a spinner to show while data is loading -->
@@ -238,6 +239,33 @@
         error.classList.add("error");
 
         errorSection.appendChild(error);
+    }
+    async function updateData() {
+    const startDate = document.getElementById("start_date").value;
+    const endDate = document.getElementById("end_date").value;
+    const currencies = document.getElementById("currencies").value;
+
+    try {
+        const response = await fetch(`/update_data`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                start_date: startDate,
+                end_date: endDate,
+                currencies: currencies
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error updating data: ${response.statusText}`);
+        }
+        const result = await response.json();
+        alert(result.message);
+    } catch (error) {
+        alert(error.message);
+    }
     }
 </script>
 </body>

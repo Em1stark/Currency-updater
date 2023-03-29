@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from flask import Flask, jsonify, request, render_template
 from config import Config
 from extensions import db, scheduler
@@ -26,6 +28,44 @@ def create_app():
     from flask import request
 
     from flask import request, jsonify
+
+    @app.route('/update_data', methods=['POST'])
+    def update_data():
+        data = request.get_json()
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        currencies = data.get('currencies')
+
+        # Валидация и разбор входных данных
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            return "Неверный формат даты. Используйте формат 'YYYY-MM-DD'.", 400
+
+        currencies = [c.strip() for c in currencies.split(',')]
+        if not all(currencies):
+            return "Неверный ввод валют. Пожалуйста, предоставьте список кодов валют, разделенных запятыми.", 400
+
+        # Логика обновления базы данных
+        for currency_code in currencies:
+            currency_info = CurrencyInfoService.get_by_code(currency_code)
+            if not currency_info:
+                continue
+
+            current_date = start_date
+            while current_date <= end_date:
+
+                import random
+                amount = 1
+                rate_value = random.uniform(0.5, 2.0)
+
+                rate_date = RateDateService.find_or_create(current_date)
+                RateService.create_or_update(rate_date, currency_info, amount, rate_value)
+
+                current_date += timedelta(days=1)
+
+        return jsonify({"message": "Данные успешно обновлены"})
 
     @app.route('/report', methods=['GET'])
     def get_rates_report():
