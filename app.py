@@ -27,6 +27,31 @@ def create_app():
 
     from flask import request, jsonify
 
+    from flask import jsonify
+
+    @app.route('/update_data', methods=['POST'])
+    def update_data():
+        data = request.get_json()
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        currencies = data.get('currencies')
+
+        # Валидация и разбор входных данных
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            return "Неверный формат даты. Используйте формат 'YYYY-MM-DD'.", 400
+
+        currencies = [c.strip() for c in currencies.split(',')]
+        if not all(currencies):
+            return "Неверный ввод валют. Пожалуйста, предоставьте список кодов валют, разделенных запятыми.", 400
+
+        # Здесь вы можете добавить логику обновления базы данных с использованием полученных данных
+        # ...
+
+        return jsonify({"message": "Данные успешно обновлены"})
+
     @app.route('/report', methods=['GET'])
     def get_rates_report():
         start_date = request.args.get('start_date')
