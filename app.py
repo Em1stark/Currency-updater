@@ -28,6 +28,44 @@ def create_app():
     from flask import request
 
     from flask import request, jsonify
+    from flask import jsonify
+
+    @app.route('/update_data', methods=['POST'])
+    def update_data():
+        data = request.get_json()
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        currencies = data.get('currencies')
+
+        # Валидация и разбор входных данных
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            return "Неверный формат даты. Используйте формат 'YYYY-MM-DD'.", 400
+
+        currencies = [c.strip() for c in currencies.split(',')]
+        if not all(currencies):
+            return "Неверный ввод валют. Пожалуйста, предоставьте список кодов валют, разделенных запятыми.", 400
+
+        # Здесь вы можете добавить логику обновления базы данных с использованием полученных данных
+        # ...
+
+        return jsonify({"message": "Данные успешно обновлены"})
+
+    @app.route('/fetch_data', methods=['POST'])
+    def fetch_data():
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            return "Invalid date format. Please use 'YYYY-MM-DD' format.", 400
+
+        RateService.fetch_rates_by_date_range(start_date, end_date)
+        return "Data fetched successfully.", 200
 
     @app.route('/update_data', methods=['POST'])
     def update_data():
