@@ -214,42 +214,54 @@
         document.getElementById("spinner").classList.remove("active");
     }
 
-    function updateReportTable(data) {
-        const tableBody = document.getElementById("report_table_body");
-        tableBody.innerHTML = "";
+async function fetchReport() {
+    const startDate = document.getElementById("start_date").value;
+    const endDate = document.getElementById("end_date").value;
+    const currencies = document.getElementById("currencies").value;
 
-        for (const currencyData of data) {
-            const row = document.createElement("tr");
-            for (const value of [currencyData.currency, currencyData.minimum, currencyData.maximum, currencyData.average]) {
-                const cell = document.createElement("td");
-                cell.textContent = value;
-                row.appendChild(cell);
-            }
-            tableBody.appendChild(row);
+    try {
+        // Fetch data for the given date range
+        const fetchDataResponse = await fetch('/fetch_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `start_date=${startDate}&end_date=${endDate}`,
+        });
+        if (!fetchDataResponse.ok) {
+            throw new Error(`Error fetching data: ${fetchDataResponse.statusText}`);
         }
 
-        document.getElementById("report_table").style.display = "table";
-    }
-
-    async function fetchReport() {
-        const startDate = document.getElementById("start_date").value;
-        const endDate = document.getElementById("end_date").value;
-        const currencies = document.getElementById("currencies").value;
-
-        try {
-            showSpinner();
-            const response = await fetch(`/report?start_date=${startDate}&end_date=${endDate}&currencies=${currencies}`);
-            if (!response.ok) {
-                throw new Error(`Ошибка получения отчёта: ${response.statusText}`);
-            }
-            const reportData = await response.json();
-            updateReportTable(reportData);
-            hideSpinner();
-        } catch (error) {
-            hideSpinner();
-            showError(error.message);
+        const response = await fetch(`/report?start_date=${startDate}&end_date=${endDate}&currencies=${currencies}`);
+        if (!response.ok) {
+            throw new Error(`Error fetching report: ${response.statusText}`);
         }
+        const reportData = await response.json();
+        updateReportTable(reportData);
+    } catch (error) {
+        console.error("Error fetching report:", error);
+        alert(`Failed to fetch report: ${error.message}`);
     }
+}
+
+function updateReportTable(reportData) {
+    // Update the report table with the new data
+    const table = document.getElementById("report_table");
+    const tbody = table.getElementsByTagName("tbody")[0];
+
+    // Clear previous data
+    tbody.innerHTML = "";
+
+    // Add new rows
+    reportData.forEach((entry) => {
+        const row = tbody.insertRow();
+        row.insertCell().innerText = entry.currency;
+        row.insertCell().innerText = entry.minimum.toFixed(2);
+        row.insertCell().innerText = entry.maximum.toFixed(2);
+        row.insertCell().innerText = entry.average.toFixed(2);
+    });
+}
+
 
     function openRawJson() {
     const startDate = document.getElementById("start_date").value;
